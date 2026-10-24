@@ -340,11 +340,22 @@
 
     <!-- Card 2: Crear Clave -->
     <div class="card">
-      <h2>⚡ Crear Nueva Clave de Acceso (Bloqueo 1 Dispositivo)</h2>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2 style="margin-bottom: 0;">⚡ Generador Automático de Claves (Bloqueo 1 Dispositivo)</h2>
+        <button type="button" class="btn-action" onclick="fillRandomKey()" style="color: #c084fc; background: #23163e; border: 1px solid #4a307d; border-radius: 8px; padding: 6px 12px; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+          🎲 Generar Nuevo Código
+        </button>
+      </div>
+
       <div class="form-grid">
         <div class="input-group">
-          <label>Nombre de la Clave (Cero marcas de agua)</label>
-          <input type="text" id="inKey" placeholder="Ej: CDR-VIP-1234 (o dejar vacío para autogenerar)">
+          <label>Nombre de la Clave</label>
+          <div style="display: flex; gap: 6px;">
+            <input type="text" id="inKey" placeholder="Ej: CDR-VIP-1234">
+            <button type="button" class="btn-action" onclick="fillRandomKey()" title="Generar código aleatorio automático" style="background: #23163e; border: 1px solid #4a307d; border-radius: 8px; padding: 0 12px; color: #d8b4fe; font-size: 15px;">
+              ⚡
+            </button>
+          </div>
         </div>
         <div class="input-group">
           <label>Duración</label>
@@ -366,8 +377,29 @@
           <input type="text" id="inHwid" placeholder="Dejar vacío para auto-bloquear al 1er uso">
         </div>
         <button class="btn-primary" onclick="addKey()">
-          <span>+</span> Agregar y Guardar
+          <span>+</span> Crear y Guardar
         </button>
+      </div>
+
+      <!-- Barra de Generador Rápido Automático de 1 Clic -->
+      <div style="margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--card-border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 12px; font-weight: 600; color: #d8b4fe;">⚡ Generador Rápido (Crea, Guarda y Copia):</span>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn-action" onclick="quickGenerate(1)" style="background: rgba(147, 51, 234, 0.15); border: 1px solid #7e22ce; color: #e9d5ff; border-radius: 8px; padding: 6px 12px; font-size: 11px;">
+            ⚡ 1 Día
+          </button>
+          <button class="btn-action" onclick="quickGenerate(7)" style="background: rgba(147, 51, 234, 0.15); border: 1px solid #7e22ce; color: #e9d5ff; border-radius: 8px; padding: 6px 12px; font-size: 11px;">
+            ⚡ 7 Días
+          </button>
+          <button class="btn-action" onclick="quickGenerate(30)" style="background: rgba(34, 197, 94, 0.15); border: 1px solid #16a34a; color: #86efac; border-radius: 8px; padding: 6px 12px; font-size: 11px; font-weight: 700;">
+            ⚡ 30 Días (1 Mes)
+          </button>
+          <button class="btn-action" onclick="quickGenerate(9999)" style="background: rgba(234, 179, 8, 0.15); border: 1px solid #ca8a04; color: #fde047; border-radius: 8px; padding: 6px 12px; font-size: 11px; font-weight: 700;">
+            👑 Lifetime
+          </button>
+        </div>
       </div>
     </div>
 
@@ -439,11 +471,54 @@
     calcDate();
 
     function generateCleanKey() {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
       let part1 = '', part2 = '';
       for (let i = 0; i < 4; i++) part1 += chars.charAt(Math.floor(Math.random() * chars.length));
       for (let i = 0; i < 4; i++) part2 += chars.charAt(Math.floor(Math.random() * chars.length));
       return `CDR-${part1}-${part2}`;
+    }
+
+    function fillRandomKey() {
+      const k = generateCleanKey();
+      document.getElementById('inKey').value = k;
+      document.getElementById('inKey').focus();
+      document.getElementById('inKey').select();
+    }
+
+    async function quickGenerate(days) {
+      const key = generateCleanKey();
+      let expires = "";
+      let note = "";
+      if (days === 9999) {
+        expires = "2035-12-31";
+        note = "👑 Lifetime (Auto-generado)";
+      } else {
+        const d = new Date();
+        d.setDate(d.getDate() + days);
+        expires = d.toISOString().split('T')[0];
+        note = `⚡ ${days} Días (Auto-generado)`;
+      }
+
+      licenses[key] = {
+        active: true,
+        expires: expires,
+        hwid: "",
+        note: note
+      };
+
+      renderTable();
+
+      try {
+        await navigator.clipboard.writeText(key);
+      } catch (e) { }
+
+      showStatus(`⚡ ¡Clave ${key} creada y copiada! Guardando en GitHub...`, "#4ade80");
+
+      if (document.getElementById('ghToken').value.trim()) {
+        await syncWithGitHub();
+      }
+
+      alert(`✔ ¡Clave Generada y Copiada con Éxito!\n\n🔑 Clave: ${key}\n📅 Expiración: ${expires}\n\n¡Ya está copiada en tu portapapeles, solo dale Ctrl+V para enviársela a tu cliente!`);
     }
 
     // Cargar licenses.json desde GitHub API o fallback local
@@ -681,6 +756,7 @@
     }
 
     fetchFromGitHub();
+    fillRandomKey();
   </script>
 </body>
 </html>
