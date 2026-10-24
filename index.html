@@ -94,7 +94,7 @@
 
     .form-grid {
       display: grid;
-      grid-template-columns: 2fr 1fr 1.5fr auto;
+      grid-template-columns: 2fr 1fr 1.2fr 1.4fr auto;
       gap: 12px;
       align-items: end;
     }
@@ -243,6 +243,40 @@
       color: #ef4444;
     }
 
+    .hwid-badge {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .hwid-locked {
+      background: rgba(99, 102, 241, 0.15);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.35);
+    }
+    .hwid-free {
+      background: rgba(34, 197, 94, 0.12);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.25);
+    }
+    .btn-reset-hwid {
+      color: #fbbf24;
+    }
+    .btn-reset-hwid:hover {
+      background: rgba(251, 191, 36, 0.12);
+      color: #fef08a;
+    }
+    .btn-edit-hwid {
+      color: #38bdf8;
+    }
+    .btn-edit-hwid:hover {
+      background: rgba(56, 189, 248, 0.12);
+      color: #7dd3fc;
+    }
+
     .config-grid {
       display: grid;
       grid-template-columns: 1fr 1fr 2fr auto;
@@ -306,7 +340,7 @@
 
     <!-- Card 2: Crear Clave -->
     <div class="card">
-      <h2>⚡ Crear Nueva Clave de Acceso</h2>
+      <h2>⚡ Crear Nueva Clave de Acceso (Bloqueo 1 Dispositivo)</h2>
       <div class="form-grid">
         <div class="input-group">
           <label>Nombre de la Clave (Cero marcas de agua)</label>
@@ -326,6 +360,10 @@
         <div class="input-group">
           <label>Fecha de Expiración</label>
           <input type="date" id="inExpires">
+        </div>
+        <div class="input-group">
+          <label>HWID Específico (Opcional)</label>
+          <input type="text" id="inHwid" placeholder="Dejar vacío para auto-bloquear al 1er uso">
         </div>
         <button class="btn-primary" onclick="addKey()">
           <span>+</span> Agregar y Guardar
@@ -348,6 +386,7 @@
               <th>Clave</th>
               <th>Estado</th>
               <th>Expiración</th>
+              <th>Dispositivo (HWID)</th>
               <th>Nota</th>
               <th style="text-align: right;">Acciones</th>
             </tr>
@@ -505,14 +544,17 @@
         return;
       }
 
+      const customHwid = document.getElementById('inHwid') ? document.getElementById('inHwid').value.trim() : "";
+
       licenses[key] = {
         active: true,
         expires: expires,
-        hwid: "",
-        note: "Creado desde Gestor Web"
+        hwid: customHwid,
+        note: customHwid ? "Bloqueado a HWID específico" : "Bloqueo automático al 1er uso"
       };
 
       document.getElementById('inKey').value = '';
+      if (document.getElementById('inHwid')) document.getElementById('inHwid').value = '';
       renderTable();
       if (document.getElementById('ghToken').value.trim()) {
         syncWithGitHub();
@@ -530,13 +572,55 @@
     }
 
     function deleteKey(key) {
-      if (confirm(`¿Seguro que deseas eliminar la clave ${key}? Dejará de funcionar al instante.`)) {
+      if (confirm(`¿Seguro que deseas eliminar la clave "${key}"? Dejará de funcionar al instante.`)) {
         delete licenses[key];
         renderTable();
         if (document.getElementById('ghToken').value.trim()) {
           syncWithGitHub();
         }
       }
+    }
+
+    function resetHwid(key) {
+      if (!licenses[key]) return;
+      const prevHwid = licenses[key].hwid || "";
+      if (!prevHwid) {
+        alert(`La clave "${key}" ya está libre (no tiene ningún dispositivo vinculado).`);
+        return;
+      }
+
+      if (confirm(`¿Deseas desvincular el dispositivo de la clave "${key}"?\n\nHWID actual: ${prevHwid}\n\nAl resetearla, quedará LIBRE para que el cliente pueda activarla en un nuevo PC.`)) {
+        licenses[key].hwid = "";
+        licenses[key].note = "HWID reseteado por admin";
+        renderTable();
+        showStatus(`✔ HWID desvinculado con éxito para "${key}". Guardando en GitHub...`, "#4ade80");
+        if (document.getElementById('ghToken').value.trim()) {
+          syncWithGitHub();
+        }
+      }
+    }
+
+    function setManualHwid(key) {
+      if (!licenses[key]) return;
+      const prev = licenses[key].hwid || "";
+      const val = prompt(`Asignar HWID para la clave "${key}":\n\n(Pega el HWID del cliente para bloquearla a su PC, o déjalo vacío para dejarla libre):`, prev);
+      if (val !== null) {
+        licenses[key].hwid = val.trim();
+        renderTable();
+        showStatus(`✔ HWID actualizado para "${key}". Guardando en GitHub...`, "#4ade80");
+        if (document.getElementById('ghToken').value.trim()) {
+          syncWithGitHub();
+        }
+      }
+    }
+
+    function copyText(txt) {
+      if (!txt) return;
+      navigator.clipboard.writeText(txt).then(() => {
+        alert("✔ HWID copiado al portapapeles:\n" + txt);
+      }).catch(() => {
+        prompt("Copia tu HWID manualmente:", txt);
+      });
     }
 
     function renderTable() {
@@ -549,6 +633,24 @@
         const item = licenses[k];
         const tr = document.createElement('tr');
 
+        const hwidVal = item.hwid ? item.hwid.trim() : "";
+        let hwidHtml = "";
+        if (hwidVal) {
+          const shortHwid = hwidVal.length > 8 ? hwidVal.substring(0, 8) + '...' : hwidVal;
+          hwidHtml = `
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span class="hwid-badge hwid-locked" title="${hwidVal}">
+                🔒 ${shortHwid}
+              </span>
+              <button class="btn-action" style="padding: 2px 6px; font-size: 11px;" onclick="copyText('${hwidVal}')" title="Copiar HWID completo">
+                📋
+              </button>
+            </div>
+          `;
+        } else {
+          hwidHtml = `<span class="hwid-badge hwid-free" title="Esta clave se bloqueará al primer dispositivo que la active">🔓 Libre (Sin vincular)</span>`;
+        }
+
         tr.innerHTML = `
           <td><span class="key-badge">${k}</span></td>
           <td>
@@ -557,8 +659,15 @@
             </span>
           </td>
           <td style="color: #cbd5e1; font-family: var(--mono); font-size: 12px;">${item.expires || 'Sin exp.'}</td>
+          <td>${hwidHtml}</td>
           <td style="color: var(--text-dim); font-size: 12px;">${item.note || '-'}</td>
           <td style="text-align: right;">
+            <button class="btn-action btn-reset-hwid" onclick="resetHwid('${k}')" title="Desvincular HWID para permitir usar en otro PC">
+              🔄 Reset HWID
+            </button>
+            <button class="btn-action btn-edit-hwid" onclick="setManualHwid('${k}')" title="Asignar o cambiar HWID manualmente">
+              ✏️ HWID
+            </button>
             <button class="btn-action" onclick="toggleActive('${k}')">
               ${item.active ? 'Pausar' : 'Activar'}
             </button>
