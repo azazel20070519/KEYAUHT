@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CDR // License Manager Web</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0914;
+      --card-bg: #171026;
+      --card-border: #3b2864;
+      --purple-main: #9333ea;
+      --purple-hover: #a855f7;
+      --purple-glow: rgba(147, 51, 234, 0.35);
+      --text-main: #f5f0ff;
+      --text-sub: #b3a5cf;
+      --text-dim: #7e6c9e;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --danger-bg: rgba(239, 68, 68, 0.15);
+      --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: var(--font);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 16px 60px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 950px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .badge {
+      background: linear-gradient(135deg, #7e22ce, #9333ea);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 1px;
+      box-shadow: 0 0 15px var(--purple-glow);
+    }
+    .brand h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .brand p {
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 22px;
+      margin-bottom: 22px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+
+    .card h2 {
+      font-size: 16px;
+      margin-bottom: 16px;
+      color: #d8b4fe;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1.5fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .input-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-sub);
+    }
+    .input-group input, .input-group select {
+      background: #0f0a1a;
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-family: var(--font);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .input-group input:focus {
+      border-color: var(--purple-main);
+      box-shadow: 0 0 8px var(--purple-glow);
+    }
+
+    button.btn-primary {
+      background: var(--purple-main);
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      height: 40px;
+      transition: background 0.2s, transform 0.1s;
+    }
+    button.btn-primary:hover {
+      background: var(--purple-hover);
+      transform: translateY(-1px);
+    }
+
+    button.btn-success {
+      background: #16a34a;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+    button.btn-success:hover {
+      background: #22c55e;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    th {
+      background: #110b1f;
+      color: var(--text-sub);
+      font-weight: 600;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--card-border);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #23183d;
+      vertical-align: middle;
+    }
+    tr:hover td {
+      background: rgba(147, 51, 234, 0.05);
+    }
+
+    .key-badge {
+      font-family: var(--mono);
+      font-weight: 700;
+      color: #e9d5ff;
+      background: #23163e;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid #4a307d;
+      display: inline-block;
+    }
+
+    .status-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 12px;
+      display: inline-block;
+    }
+    .status-active {
+      background: rgba(34, 197, 94, 0.15);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    .status-inactive {
+      background: var(--danger-bg);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-action {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-action:hover {
+      background: rgba(255,255,255,0.06);
+      color: var(--text-main);
+    }
+    .btn-delete {
+      color: #f87171;
+    }
+    .btn-delete:hover {
+      background: var(--danger-bg);
+      color: #ef4444;
+    }
+
+    .config-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 2fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .status-msg {
+      margin-top: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <div class="badge">CDR</div>
+        <div>
+          <h1>GESTOR DE LICENCIAS // GITHUB</h1>
+          <p>Crea, pausa y elimina claves sin marcas de agua ni restricciones</p>
+        </div>
+      </div>
+      <div>
+        <a href="https://raw.githubusercontent.com/azazel20070519/KEYAUHT/main/licenses.json" target="_blank" style="color: #c084fc; font-size: 12px; text-decoration: none; font-weight: 600; background: #23163e; padding: 8px 14px; border-radius: 8px; border: 1px solid #4a307d;">
+          Ver Raw licenses.json ↗
+        </a>
+      </div>
+    </header>
+
+    <!-- Card 1: Conexión Automática con GitHub -->
+    <div class="card" style="border-color: #6366f1;">
+      <h2 style="color: #a5b4fc;">🔗 Conexión Automática a tu Repositorio GitHub</h2>
+      <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 12px;">
+        Configura tu Personal Access Token (Classic o Fine-grained con permiso <code>repo</code> o <code>contents:write</code>) para que cualquier cambio se guarde en GitHub automáticamente con 1 clic.
+      </p>
+      <div class="config-grid">
+        <div class="input-group">
+          <label>Usuario GitHub</label>
+          <input type="text" id="ghUser" value="azazel20070519">
+        </div>
+        <div class="input-group">
+          <label>Repositorio</label>
+          <input type="text" id="ghRepo" value="KEYAUHT">
+        </div>
+        <div class="input-group">
+          <label>GitHub Personal Token (ghp_...)</label>
+          <input type="password" id="ghToken" placeholder="Pega tu token de GitHub aquí">
+        </div>
+        <button class="btn-primary" onclick="saveSettings()" style="height: 38px;">
+          Guardar Token
+        </button>
+      </div>
+      <div id="ghStatus" class="status-msg"></div>
+    </div>
+
+    <!-- Card 2: Crear Clave -->
+    <div class="card">
+      <h2>⚡ Crear Nueva Clave de Acceso</h2>
+      <div class="form-grid">
+        <div class="input-group">
+          <label>Nombre de la Clave (Cero marcas de agua)</label>
+          <input type="text" id="inKey" placeholder="Ej: CDR-VIP-1234 (o dejar vacío para autogenerar)">
+        </div>
+        <div class="input-group">
+          <label>Duración</label>
+          <select id="inDuration" onchange="calcDate()">
+            <option value="1">1 Día</option>
+            <option value="7">7 Días (1 Semana)</option>
+            <option value="30" selected>30 Días (1 Mes)</option>
+            <option value="90">90 Días (3 Meses)</option>
+            <option value="365">1 Año</option>
+            <option value="9999">De por vida (Lifetime)</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Fecha de Expiración</label>
+          <input type="date" id="inExpires">
+        </div>
+        <button class="btn-primary" onclick="addKey()">
+          <span>+</span> Agregar y Guardar
+        </button>
+      </div>
+    </div>
+
+    <!-- Card 3: Lista de Claves Activas -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2 style="margin-bottom: 0;">🔑 Claves Registradas (<span id="keyCount">0</span>)</h2>
+        <button class="btn-success" onclick="syncWithGitHub()" id="btnSync">
+          ☁️ Guardar Cambios en GitHub
+        </button>
+      </div>
+      <div class="table-responsive">
+        <table id="keysTable">
+          <thead>
+            <tr>
+              <th>Clave</th>
+              <th>Estado</th>
+              <th>Expiración</th>
+              <th>Nota</th>
+              <th style="text-align: right;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let licenses = {};
+    let fileSha = "";
+
+    // Cargar credenciales locales si existen
+    document.getElementById('ghUser').value = localStorage.getItem('gh_user') || 'azazel20070519';
+    document.getElementById('ghRepo').value = localStorage.getItem('gh_repo') || 'KEYAUHT';
+    document.getElementById('ghToken').value = localStorage.getItem('gh_token') || '';
+
+    function saveSettings() {
+      const u = document.getElementById('ghUser').value.trim();
+      const r = document.getElementById('ghRepo').value.trim();
+      const t = document.getElementById('ghToken').value.trim();
+      localStorage.setItem('gh_user', u);
+      localStorage.setItem('gh_repo', r);
+      localStorage.setItem('gh_token', t);
+      showStatus("✔ Ajustes guardados en tu navegador. Ahora intentando sincronizar...", "#4ade80");
+      fetchFromGitHub();
+    }
+
+    function showStatus(msg, color) {
+      const el = document.getElementById('ghStatus');
+      el.style.display = 'block';
+      el.style.color = color;
+      el.innerText = msg;
+    }
+
+    function calcDate() {
+      const days = parseInt(document.getElementById('inDuration').value);
+      if (days === 9999) {
+        document.getElementById('inExpires').value = '2035-12-31';
+        return;
+      }
+      const d = new Date();
+      d.setDate(d.getDate() + days);
+      document.getElementById('inExpires').value = d.toISOString().split('T')[0];
+    }
+    calcDate();
+
+    function generateCleanKey() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let part1 = '', part2 = '';
+      for (let i = 0; i < 4; i++) part1 += chars.charAt(Math.floor(Math.random() * chars.length));
+      for (let i = 0; i < 4; i++) part2 += chars.charAt(Math.floor(Math.random() * chars.length));
+      return `CDR-${part1}-${part2}`;
+    }
+
+    // Cargar licenses.json desde GitHub API o fallback local
+    async function fetchFromGitHub() {
+      const u = document.getElementById('ghUser').value.trim();
+      const r = document.getElementById('ghRepo').value.trim();
+      const t = document.getElementById('ghToken').value.trim();
+
+      const headers = { "Accept": "application/vnd.github.v3+json" };
+      if (t) headers["Authorization"] = `token ${t}`;
+
+      try {
+        const res = await fetch(`https://api.github.com/repos/${u}/${r}/contents/licenses.json`, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          fileSha = data.sha;
+          const decoded = decodeURIComponent(escape(atob(data.content)));
+          licenses = JSON.parse(decoded);
+          showStatus("✔ Conectado a GitHub exitosamente. Claves cargadas.", "#4ade80");
+          renderTable();
+          return;
+        }
+      } catch (err) { }
+
+      // Fallback
+      fetch('licenses.json')
+        .then(r => r.json())
+        .then(d => { licenses = d; renderTable(); })
+        .catch(() => renderTable());
+    }
+
+    async function syncWithGitHub() {
+      const u = document.getElementById('ghUser').value.trim();
+      const r = document.getElementById('ghRepo').value.trim();
+      const t = document.getElementById('ghToken').value.trim();
+
+      if (!t) {
+        alert("Introduce tu Token de GitHub arriba para guardar cambios automáticamente.");
+        return;
+      }
+
+      const btn = document.getElementById('btnSync');
+      btn.innerText = "⏳ Guardando en GitHub...";
+      btn.disabled = true;
+
+      try {
+        // 1. Obtener SHA actual si no se tiene
+        const getRes = await fetch(`https://api.github.com/repos/${u}/${r}/contents/licenses.json`, {
+          headers: { "Authorization": `token ${t}`, "Accept": "application/vnd.github.v3+json" }
+        });
+        if (getRes.ok) {
+          const getData = await getRes.json();
+          fileSha = getData.sha;
+        }
+
+        // 2. Guardar nuevo contenido
+        const contentStr = unescape(encodeURIComponent(JSON.stringify(licenses, null, 2)));
+        const b64 = btoa(contentStr);
+
+        const putRes = await fetch(`https://api.github.com/repos/${u}/${r}/contents/licenses.json`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `token ${t}`,
+            "Accept": "application/vnd.github.v3+json",
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: "Actualización de licencias desde Web Dashboard CDR",
+            content: b64,
+            sha: fileSha || undefined
+          })
+        });
+
+        if (putRes.ok) {
+          const putData = await putRes.json();
+          fileSha = putData.content.sha;
+          showStatus("✔ ¡Cambios guardados en GitHub automáticamente!", "#4ade80");
+          alert("✔ ¡Guardado con éxito en GitHub!");
+        } else {
+          const errData = await putRes.json();
+          showStatus(`⚠ Error al guardar: ${errData.message}`, "#f87171");
+        }
+      } catch (e) {
+        showStatus(`⚠ Error de conexión: ${e.message}`, "#f87171");
+      } finally {
+        btn.innerText = "☁️ Guardar Cambios en GitHub";
+        btn.disabled = false;
+      }
+    }
+
+    function addKey() {
+      let key = document.getElementById('inKey').value.trim();
+      if (!key) key = generateCleanKey();
+
+      const expires = document.getElementById('inExpires').value;
+      if (!expires) {
+        alert('Por favor selecciona una fecha de expiración.');
+        return;
+      }
+
+      licenses[key] = {
+        active: true,
+        expires: expires,
+        hwid: "",
+        note: "Creado desde Gestor Web"
+      };
+
+      document.getElementById('inKey').value = '';
+      renderTable();
+      if (document.getElementById('ghToken').value.trim()) {
+        syncWithGitHub();
+      }
+    }
+
+    function toggleActive(key) {
+      if (licenses[key]) {
+        licenses[key].active = !licenses[key].active;
+        renderTable();
+        if (document.getElementById('ghToken').value.trim()) {
+          syncWithGitHub();
+        }
+      }
+    }
+
+    function deleteKey(key) {
+      if (confirm(`¿Seguro que deseas eliminar la clave ${key}? Dejará de funcionar al instante.`)) {
+        delete licenses[key];
+        renderTable();
+        if (document.getElementById('ghToken').value.trim()) {
+          syncWithGitHub();
+        }
+      }
+    }
+
+    function renderTable() {
+      const tbody = document.querySelector('#keysTable tbody');
+      tbody.innerHTML = '';
+      const keys = Object.keys(licenses);
+      document.getElementById('keyCount').innerText = keys.length;
+
+      keys.forEach(k => {
+        const item = licenses[k];
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+          <td><span class="key-badge">${k}</span></td>
+          <td>
+            <span class="status-pill ${item.active ? 'status-active' : 'status-inactive'}">
+              ${item.active ? '● ACTIVA' : '○ PAUSADA'}
+            </span>
+          </td>
+          <td style="color: #cbd5e1; font-family: var(--mono); font-size: 12px;">${item.expires || 'Sin exp.'}</td>
+          <td style="color: var(--text-dim); font-size: 12px;">${item.note || '-'}</td>
+          <td style="text-align: right;">
+            <button class="btn-action" onclick="toggleActive('${k}')">
+              ${item.active ? 'Pausar' : 'Activar'}
+            </button>
+            <button class="btn-action btn-delete" onclick="deleteKey('${k}')">
+              Eliminar
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    fetchFromGitHub();
+  </script>
+</body>
+</html>
